@@ -1,0 +1,4 @@
+*.o
+local-data/
+test-bno
+.gdb_history
