@@ -16,8 +16,10 @@
 
 #include "shtp-connection.h"
 #include "shtp-packet.h"
+#include "timer.h"
 
 #define SHTP_DEFAULT_BSIZE 512
+#define PACKET_READ_TIMEOUT 2.0 /*seconds*/
 
 static bool shtp_connection_buffer_resize(ShtpConnection *self, uint16_t len);
 
@@ -80,33 +82,30 @@ ShtpPacket *shtp_connection_read(ShtpConnection *self, uint8_t device)
     ssize_t nread;
     ShtpPacket *packet;
     bool continuation;
+    uint16_t to_read;
 
     /* Each read is twofold: We first read only the size of a header
-     * to know how much data is available from the device.
-     * Then we issue a second read operation for the data. This
-     * second read operation will alse read a header which should be the
-     * same as the first, but with the continuation flag set.
+     * to know how much data is available from the device, if there any.
      *
+     * This operation should never block as the I2C_SLAVE call will
+     * make the device issue at least 4 bytes.
      * */
     ioctl(self->fd, I2C_SLAVE, device & 0x7F);
     nread = read(self->fd, self->buffer, SHTP_HEADER_LEN);
-    if(nread < SHTP_HEADER_LEN)
-        return NULL;
-#if 0
-    printf("SHTP READ packet header: ");
-    for(int i = 0; i < 4; i++)
-        printf("%#04x ",self->buffer[i]);
-    printf("\n");
-#endif
-    packet = shtp_packet_cast(self->buffer, &continuation);
-    if(packet->size < SHTP_HEADER_LEN)
+    if(nread < SHTP_HEADER_LEN) /*short fragment: discard (shouldn't happen)*/
         return NULL;
 
+    packet = shtp_packet_cast(self->buffer, &continuation);
+    if(packet->size < SHTP_HEADER_LEN) /*short fragment: discard*/
+        return NULL;
+
+    to_read = shtp_packet_payload_size(packet);
+    if(to_read == 0)
+        return NULL; /*No data is available, just return*/
 
     /*TODO: Invalid channel (>6?)*/
     self->sequence_number[packet->channel] = packet->sequence;
 
-    uint16_t to_read = shtp_packet_payload_size(packet);
     printf("Channel %d has %d bytes available to read\n",
         packet->channel,
         to_read
@@ -124,9 +123,9 @@ ShtpPacket *shtp_connection_read(ShtpConnection *self, uint8_t device)
             return NULL;
     }
 
-    /* Then read the content. Each read will yield a header
-     * that will have a continuation flag set
-     * */
+    /* Then we issue a second read operation for the data. This
+     * second read operation will alse read a header which should be the
+     * same as the first, but with the continuation flag set.*/
     ioctl(self->fd, I2C_SLAVE, device & 0x7F);
     nread = read(self->fd, self->buffer, wlen);
     if(nread != wlen)
@@ -142,6 +141,45 @@ ShtpPacket *shtp_connection_read(ShtpConnection *self, uint8_t device)
     return new_packet;
 }
 
+#if 0
+ShtpPacket *shtp_connection_wait_for(ShtpConnection *self,
+                                     uint8_t channel, uint8_t report_id)
+{
+
+
+}
+#endif
+
+/**
+ * @brief Polls for a packet for at most @param timeout seconds.
+ *
+ * The returned value will point to an internal buffer that can
+ * be modified by subsequent calls to shtp_connection_* functions.
+ * Make a copy if you need the value to persist across calls.
+ *
+ * Caller must not free the returned value.
+ *
+ * @param self a ShtpConnection
+ * @param device The device to poll from
+ * @param timeout timeout in seconds, -1 for default value
+ * @return a ShtpPacket or NULL
+ * */
+ShtpPacket *shtp_connection_poll(ShtpConnection *self, uint8_t device,
+                                 int8_t timeout)
+{
+    Timer t;
+    ShtpPacket *rv;
+
+    timeout = (timeout < 0) ? PACKET_READ_TIMEOUT : timeout;
+
+    timer_start(&t);
+    do{
+        rv = shtp_connection_read(self, device);
+        if(rv)
+            return rv;
+    }while(!timeout_elapsed(&t, timeout));
+    return NULL;
+}
 
 /**/
 static bool shtp_connection_buffer_resize(ShtpConnection *self, uint16_t len)

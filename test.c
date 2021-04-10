@@ -21,5 +21,5 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    bno080_soft_reset(imu);
+    printf("Init complete\n");
 }

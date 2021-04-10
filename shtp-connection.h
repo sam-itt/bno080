@@ -4,7 +4,7 @@
 
 #include "shtp-packet.h"
 
-#define NCHANNELS 6
+#define NCHANNELS 6 //Move to BNO
 
 
 typedef struct{
@@ -22,4 +22,7 @@ uint8_t shtp_connection_send(ShtpConnection *self,
                              uint16_t len, void *data);
 
 ShtpPacket *shtp_connection_read(ShtpConnection *self, uint8_t device);
+ShtpPacket *shtp_connection_poll(ShtpConnection *self, uint8_t device,
+                                 int8_t timeout);
+
 #endif /* SHTP_CONNECTION_H */

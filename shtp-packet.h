@@ -27,4 +27,10 @@ static inline uint16_t shtp_packet_payload_size(ShtpPacket *self)
           ? self->size - SHTP_HEADER_LEN
           : 0;
 }
+
+static inline bool shtp_packet_match(ShtpPacket *self,
+                                  uint8_t channel, uint8_t report)
+{
+    return self->channel == channel && self->payload[0] == report;
+}
 #endif /* SHTP_PACKET_H */
