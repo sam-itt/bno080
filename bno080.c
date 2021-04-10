@@ -18,7 +18,6 @@
 #define _SHTP_REPORT_PRODUCT_ID_REQUEST 0xF9
 #define _SHTP_REPORT_PRODUCT_ID_RESPONSE 0xF8
 
-#define USEC_TO_SEC(a) ((a)*1000)
 
 static ShtpPacket *wait_for_packet_type(Bno080 *self, uint8_t channel,
                                         uint8_t report, int8_t timeout);
@@ -50,7 +49,7 @@ Bno080* bno080_init(Bno080 *self, uint8_t device, const char *i2c_bus)
         bno080_check_id(self);
         if(self->partno)
             break;
-        usleep(USEC_TO_SEC(0.5));
+        timer_sleep(0.5);
     }
 
     return self->partno ? self : NULL;
@@ -66,18 +65,18 @@ bool bno080_soft_reset(Bno080 *self)
         BNO_CHANNEL_EXE,
         1, &data
     );
-    usleep(USEC_TO_SEC(0.5));
+    timer_sleep(0.5);
     seq = shtp_connection_send(&self->connection, self->device,
         BNO_CHANNEL_EXE,
         1, &data
     );
-    usleep(USEC_TO_SEC(0.5));
+    timer_sleep(0.5);
 
     for(int i = 0; i < 3; i++){
  //       printf("%s: loop %d\n", __FUNCTION__, i);
         p = shtp_connection_read(&self->connection, self->device);
         if(!p){
-            usleep(USEC_TO_SEC(0.5));
+            timer_sleep(0.5);
         }else{
         //    shtp_packet_dump(p);
 //            return true;
@@ -133,10 +132,9 @@ static ShtpPacket *wait_for_packet_type(Bno080 *self, uint8_t channel,
     timer_start(&t);
     do{
         rv = shtp_connection_poll(&self->connection, self->device, -1);
-        if(!rv) continue;
-
-        if(shtp_packet_match(rv, channel, report))
+        if(rv && shtp_packet_match(rv, channel, report)){
             return rv;
+        }
 
         /* Here the python code goes for de-slicing other reports
          * when they don't match. TODO: Check if that is really needed*/

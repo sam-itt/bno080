@@ -4,7 +4,7 @@ SRCDIR=.
 
 CC=gcc
 CFLAGS=-g3 -O0 -I$(SRCDIR)
-LDFLAGS=
+LDFLAGS=-lm
 EXEC=test-bno
 SRC= $(wildcard $(SRCDIR)/*.c)
 OBJ= $(SRC:.c=.o)
