@@ -6,6 +6,7 @@
 #include <assert.h>
 #include "shtp-packet.h"
 
+static const char *pretty_channel(uint8_t channel);
 /**
  * Casts @param data into a ShtpPacket, taking care of endianness
  *
@@ -84,21 +85,33 @@ uint16_t shtp_packet_build(uint8_t channel, uint8_t sequence,
 void shtp_packet_dump(ShtpPacket *self)
 {
     uint16_t psize;
+    int i;
 
     psize = shtp_packet_payload_size(self);
 
     printf("Packet %p:\n", self);
     printf("\tHeader:\n");
     printf("\t\tData Len: %d\n", psize);
-    printf("\t\tChannel: %d\n", self->channel);
+    printf("\t\tChannel: %s(%d)\n", pretty_channel(self->channel), self->channel);
     printf("\t\tSequence number: %d\n", self->sequence);
 
     printf("\tData:\n");
-    for(int i = 0; i < psize; i++){
+    for(i = 0; i < psize; i++){
         if((i+4) % 4 == 0)
-            printf("\n[%#04x]", i+4);
+            printf("\t\t[%#04x] ", i+4);
         printf("%02x ", self->payload[i]);
-        fflush(stdout);
+        if(i > 1 && (i+1) % 4 == 0)
+            printf("\n");
     }
+    if( i < 1 || (i+1) % 4 != 0)
+        printf("\n");
 }
 
+
+static const char *pretty_channel(uint8_t channel)
+{
+    if(channel == 0) return "SHTP_COMMAND";
+    if(channel == 1) return "EXE";
+
+    return "UNKNOWN";
+}

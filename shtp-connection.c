@@ -67,7 +67,10 @@ uint8_t shtp_connection_send(ShtpConnection *self,
         len, data,
         self->blen, self->buffer
     );
-
+#if DEBUG_TRAFFIC
+    printf("Sending: ");
+    shtp_packet_dump((ShtpPacket *)self->buffer);
+#endif
     /*i2c write*/
     ioctl(self->fd, I2C_SLAVE, device & 0x7F);
     write(self->fd, self->buffer, wlen);
@@ -138,6 +141,10 @@ ShtpPacket *shtp_connection_read(ShtpConnection *self, uint8_t device)
     }
 
     self->sequence_number[new_packet->channel] = new_packet->sequence;
+#if DEBUG_TRAFFIC
+    printf("Got packet: ");
+    shtp_packet_dump((ShtpPacket *)self->buffer);
+#endif
     return new_packet;
 }
 
