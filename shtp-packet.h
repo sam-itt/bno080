@@ -6,6 +6,11 @@
 
 #define SHTP_HEADER_LEN 4
 
+#ifndef BNO_SHTP_CHANNEL_REPORTS
+#define BNO_SHTP_CHANNEL_REPORTS 3
+#define BNO_SHTP_CHANNEL_WAKE_REPORTS 4
+#endif
+
 typedef struct __attribute__((packed)) {
     uint16_t size; /*size of the packet, header included, in bytes*/
     uint8_t channel;
@@ -32,5 +37,11 @@ static inline bool shtp_packet_match(ShtpPacket *self,
                                   uint8_t channel, uint8_t report)
 {
     return self->channel == channel && self->payload[0] == report;
+}
+
+static inline bool shtp_packet_is_report(ShtpPacket *self)
+{
+    return    self->channel == BNO_SHTP_CHANNEL_REPORTS
+           || self->channel == BNO_SHTP_CHANNEL_WAKE_REPORTS;
 }
 #endif /* SHTP_PACKET_H */

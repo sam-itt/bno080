@@ -3,7 +3,7 @@
 SRCDIR=.
 
 CC=gcc
-CFLAGS=-g3 -O0 -I$(SRCDIR)
+CFLAGS=-g3 -O0 -I$(SRCDIR) -DDEBUG_TRAFFIC=0
 LDFLAGS=-lm
 EXEC=test-bno
 SRC= $(wildcard $(SRCDIR)/*.c)

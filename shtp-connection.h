@@ -4,8 +4,19 @@
 
 #include "shtp-packet.h"
 
-#define NCHANNELS 6 //Move to BNO
+#define SHTP_CHANNEL_COMMAND 0
+#define SHTP_CHANNEL_ERROR 1
 
+#define SHTP_REPORT_PRODUCT_ID_REQUEST 0xF9
+#define SHTP_REPORT_PRODUCT_ID_RESPONSE 0xF8
+
+#define GET_FEATURE_REQUEST 0xFE
+#define GET_FEATURE_RESPONSE 0xFC
+#define SET_FEATURE_COMMAND 0xFD
+
+#define COMMAND_RESPONSE 0xF1
+
+#define NCHANNELS 6
 
 typedef struct{
     int fd;

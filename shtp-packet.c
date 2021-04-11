@@ -1,12 +1,16 @@
+#include <stdint.h>
 #include <stdio.h>
 //#include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 
 #include <assert.h>
+#include "shtp-connection.h"
 #include "shtp-packet.h"
 
 static const char *pretty_channel(uint8_t channel);
+static const char *pretty_report(uint8_t report);
+static const char *pretty_feature(uint8_t feature);
 /**
  * Casts @param data into a ShtpPacket, taking care of endianness
  *
@@ -93,6 +97,27 @@ void shtp_packet_dump(ShtpPacket *self)
     printf("\tHeader:\n");
     printf("\t\tData Len: %d\n", psize);
     printf("\t\tChannel: %s(%d)\n", pretty_channel(self->channel), self->channel);
+    if(psize > 0 && self->channel == 2 || self->channel == 3){ /*CONTROL || SENSOR_REPORT*/
+        uint8_t report;
+        report = self->payload[0];
+        printf("\t\t\tReport type: %s(%#04x)\n",
+            pretty_report(report),
+            report
+        );
+        if(report > 0xF0 && psize > 6){
+             printf("\t\t\tSensor Report type: %s(%#04x)\n",
+                pretty_report(self->payload[5]),
+                self->payload[5]
+            );
+            if(report == 0xFC){
+                printf("\t\t\tEnabled Feature: %s(%#04x)\n",
+                    pretty_report(self->payload[1]),
+                    self->payload[1]
+                );
+            }
+        }
+    }
+
     printf("\t\tSequence number: %d\n", self->sequence);
 
     printf("\tData:\n");
@@ -103,15 +128,42 @@ void shtp_packet_dump(ShtpPacket *self)
         if(i > 1 && (i+1) % 4 == 0)
             printf("\n");
     }
-    if( i < 1 || (i+1) % 4 != 0)
+    /* i was incremented before not entering the loop
+     * so do not+1 here*/
+    if( i < 1 || i % 4 != 0)
         printf("\n");
 }
 
 
 static const char *pretty_channel(uint8_t channel)
 {
-    if(channel == 0) return "SHTP_COMMAND";
+    if(channel == SHTP_CHANNEL_COMMAND) return "SHTP_COMMAND";
+    if(channel == SHTP_CHANNEL_ERROR) return "SHTP_ERROR";
     if(channel == 1) return "EXE";
+    if(channel == 2) return "CONTROL";
+    if(channel == 3) return "CONTROL";
+
+    return "UNKNOWN";
+}
+
+static const char *pretty_report(uint8_t report)
+{
+
+    if( report == 0x05 ) return "ROTATION_VECTOR";
+
+    if( report == 0xf1 ) return "COMMAND_RESPONSE";
+    if( report == 0xf9 ) return "PRODUCT_ID_REQUEST";
+    if( report == 0xf8 ) return "PRODUCT_ID_RESPONSE";
+    if( report == 0xfd ) return "SET_FEATURE_COMMAND";
+    if( report == 0xfc ) return "GET_FEATURE_RESPONSE";
+    if( report == 0xfb ) return "BASE_TIMESTAMP";
+
+    return "UNKNOWN";
+}
+
+static const char *pretty_feature(uint8_t feature)
+{
+    if( feature == 0x50 ) return "ROTATION_VECTOR";
 
     return "UNKNOWN";
 }

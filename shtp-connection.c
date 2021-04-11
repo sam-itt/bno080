@@ -102,18 +102,20 @@ ShtpPacket *shtp_connection_read(ShtpConnection *self, uint8_t device)
     if(packet->size < SHTP_HEADER_LEN) /*short fragment: discard*/
         return NULL;
 
-    to_read = shtp_packet_payload_size(packet);
-    if(to_read == 0)
-        return NULL; /*No data is available, just return*/
-
     /*TODO: Invalid channel (>6?)*/
     self->sequence_number[packet->channel] = packet->sequence;
 
+    /*TODO: Return the empty packet to indicate no error but no more data*/
+    to_read = shtp_packet_payload_size(packet);
+    if(to_read == 0)
+        return packet; /*No data is available, just the header*/
+
+#if DEBUG_TRAFFIC
     printf("Channel %d has %d bytes available to read\n",
         packet->channel,
         to_read
     );
-
+#endif
     if(to_read > UINT16_MAX - SHTP_HEADER_LEN){
         printf("Packet too long to fit: Shouldn't happen !!\n");
         return NULL; /*overflow*/
