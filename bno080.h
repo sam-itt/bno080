@@ -139,6 +139,8 @@ bool bno080_soft_reset(Bno080 *self);
 bool bno080_check_id(Bno080 *self);
 
 bool bno080_enable_feature(Bno080 *self, BnoFeature feature);
+
 Quaternion *bno080_quaternion(Bno080 *self);
+bool bno080_hpr(Bno080 *self, double *heading, double *pitch, double *roll);
 
 #endif /* BNO080_H */

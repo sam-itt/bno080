@@ -195,6 +195,30 @@ Quaternion *bno080_quaternion(Bno080 *self)
     return &self->rotation_vector.quaternion;
 }
 
+bool bno080_hpr(Bno080 *self, double *heading, double *pitch, double *roll)
+{
+    Quaternion *q;
+
+    q = bno080_quaternion(self);
+    if(!q)
+        return false;
+
+    double q2sqr = q->j * q->j;
+    double t0 = -2.0 * (q2sqr + q->k * q->k) + 1.0;
+    double t1 = +2.0 * (q->i * q->j + q->w * q->k);
+    double t2 = -2.0 * (q->i * q->k - q->w * q->j);
+    double t3 = +2.0 * (q->j * q->k + q->w * q->i);
+    double t4 = -2.0 * (q->i * q->i + q2sqr) + 1.0;
+
+    t2 = t2 > 1.0 ? 1.0 : t2;
+    t2 = t2 < -1.0 ? -1.0 : t2;
+
+    *pitch = asin(t2) * (180.0/M_PI);
+    *roll = atan2(t3, t4) * (180.0/M_PI);
+    *heading = atan2(t1, t0) * (180.0/M_PI);
+
+    return true;
+}
 
 static bool handle_packet(Bno080 *self, ShtpPacket *packet)
 {
