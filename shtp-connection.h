@@ -28,6 +28,8 @@ typedef struct{
 }ShtpConnection;
 
 ShtpConnection *shtp_connection_init(ShtpConnection *self, const char *i2c_bus);
+ShtpConnection *shtp_connection_dispose(ShtpConnection *self);
+
 uint8_t shtp_connection_send(ShtpConnection *self,
                              uint8_t device, uint8_t channel,
                              uint16_t len, void *data);

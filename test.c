@@ -33,4 +33,5 @@ int main(int argc, char **argv)
         if(bno080_hpr(imu, &heading, &pitch, &roll))
             printf("heading: %f pitch:%f roll: %f\n", heading, pitch, roll);
     }
+    free(bno080_dispose(imu));
 }

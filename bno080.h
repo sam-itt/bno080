@@ -134,6 +134,7 @@ typedef enum __attribute__((packed)){
 
 Bno080 *bno080_new(uint8_t device, const char *i2c_bus);
 Bno080* bno080_init(Bno080 *self, uint8_t device, const char *i2c_bus);
+Bno080 *bno080_dispose(Bno080 *self);
 
 bool bno080_soft_reset(Bno080 *self);
 bool bno080_check_id(Bno080 *self);

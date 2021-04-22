@@ -56,7 +56,7 @@ Bno080 *bno080_new(uint8_t device, const char *i2c_bus)
     return rv;
 }
 
-Bno080* bno080_init(Bno080 *self, uint8_t device, const char *i2c_bus)
+Bno080 *bno080_init(Bno080 *self, uint8_t device, const char *i2c_bus)
 {
     void *rv;
 
@@ -73,6 +73,12 @@ Bno080* bno080_init(Bno080 *self, uint8_t device, const char *i2c_bus)
     }
 
     return self->partno ? self : NULL;
+}
+
+Bno080 *bno080_dispose(Bno080 *self)
+{
+    shtp_connection_dispose(&self->connection);
+    return self;
 }
 
 bool bno080_soft_reset(Bno080 *self)

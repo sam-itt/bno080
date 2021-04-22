@@ -39,6 +39,14 @@ ShtpConnection *shtp_connection_init(ShtpConnection *self, const char *i2c_bus)
     return self;
 }
 
+ShtpConnection *shtp_connection_dispose(ShtpConnection *self)
+{
+    close(self->fd);
+    if(self->buffer)
+        free(self->buffer);
+    return self;
+}
+
 /**
  * Wraps data into a ShtpPacket and sends it over the wire
  *
